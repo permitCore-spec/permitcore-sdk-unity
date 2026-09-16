@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- Compiles the SDK's portable core (everything except UnityWebRequestTransport.cs, which
+         needs `using UnityEngine;` and only actually runs inside the Editor/a build) against a
+         real, current .NET SDK — a superset of the netstandard2.1 API surface this code
+         deliberately restricts itself to, so a clean compile+test here is genuine proof the
+         logic is correct, even though it can't prove IL2CPP AOT behavior specifically (no Unity
+         Editor/license available in this environment — see SDKs/unity/README.md's own honesty
+         note on this exact gap). -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Runtime\Json.cs" Link="Runtime\Json.cs" />
+    <Compile Include="..\Runtime\Models.cs" Link="Runtime\Models.cs" />
+    <Compile Include="..\Runtime\OfflineVerification.cs" Link="Runtime\OfflineVerification.cs" />
+    <Compile Include="..\Runtime\HardwareId.cs" Link="Runtime\HardwareId.cs" />
+    <Compile Include="..\Runtime\IPermitCoreTransport.cs" Link="Runtime\IPermitCoreTransport.cs" />
+    <Compile Include="..\Runtime\PermitCoreClient.cs" Link="Runtime\PermitCoreClient.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\test-vectors\vectors.json" Link="test-vectors\vectors.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="fixture.json" CopyToOutputDirectory="PreserveNewest" Condition="Exists('fixture.json')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>
