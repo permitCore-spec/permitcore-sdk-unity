@@ -3,9 +3,14 @@
 Official Unity client for [PermitCore](https://permitcore.dev) license management.
 
 **Requirements:** Unity 2021.2+ (.NET Standard 2.1 API Compatibility Level, the default since
-that version). Zero external package dependencies — no Newtonsoft.Json, no additional Unity
-Package Manager dependencies. Works on Windows/macOS/Linux standalone, mobile, and consoles.
-**WebGL note** below.
+that version). Zero external/third-party package dependencies — no Newtonsoft.Json. The package
+does declare one dependency on Unity's own **built-in `UnityWebRequest` module**
+(`com.unity.modules.unitywebrequest`, bundled with every Editor install, not fetched from any
+registry) — installing the SDK via UPM auto-enables it, so this only matters if you're adding the
+SDK's `Runtime/` files manually rather than through Package Manager; in that case enable "Unity
+Web Request" yourself under **Package Manager → Packages: Built-in** if you hit
+`CS1069`/"type forwarded to assembly UnityEngine.UnityWebRequestModule". Works on
+Windows/macOS/Linux standalone, mobile, and consoles. **WebGL note** below.
 
 ---
 
@@ -205,18 +210,46 @@ the actual network call. This is not incidental: it is what lets this SDK's own 
 uses) exercise the JSON parser, the ECDSA P-256/SHA-256 offline-token verification, and the
 HWID hashing directly, outside Unity, with zero Editor/license dependency.
 
-**Honest scope of what has and hasn't been verified** (2026-09-17): the portable core passed
-all 10 shared cross-SDK cryptographic test vectors (`SDKs/test-vectors/vectors.json`) plus a full
-live run against a real PermitCore API and a real, server-issued offline token (activate,
+**Honest scope of what has and hasn't been verified** (updated 2026-09-17): the portable core
+passed all 10 shared cross-SDK cryptographic test vectors (`SDKs/test-vectors/vectors.json`) plus
+a full live run against a real PermitCore API and a real, server-issued offline token (activate,
 validate, meter, floating checkout/heartbeat/checkin, offline-token verify with a genuine tamper/
 wrong-device/wrong-key rejection, and the offline grace-cache fallback with the server pulled
-offline mid-test) — the same rigor as this project's Go SDK. What this environment could **not**
-do is run the actual Unity Editor (no Unity account/license available to activate one) — so
-`UnityWebRequestTransport.cs`, the `[Serializable]`/MonoBehaviour glue, and IL2CPP AOT compilation
-specifically have been carefully written and reviewed against Unity's documented APIs, but not
-executed in a real Editor or on a built player. Treat that one file, and a real Editor smoke test
-of the demo app, as the remaining verification step before a production release — everything else
-has genuine, reproducible test coverage.
+offline mid-test) — the same rigor as this project's Go SDK.
+
+**Update — a real Unity Editor smoke test has now been run** (2026-09-17), closing this gap. The
+full package (including `UnityWebRequestTransport.cs`) was compiled inside a real, licensed Unity
+Editor (2022.3.21f1) with the demo project, then actually exercised in Play mode: license
+activation, the task dashboard, and Free/Pro feature-gating all confirmed working live against the
+real staging API. Three real bugs were found and fixed by this, not hypothetical:
+
+1. **Missing built-in module dependency**: `Demos/unity/task-manager-pro/Packages/manifest.json`
+   was missing `com.unity.modules.unitywebrequest` as a listed dependency, and this SDK's own
+   `package.json` declared no dependency on it either, so a fresh install hit
+   `CS1069`/"type forwarded to assembly UnityEngine.UnityWebRequestModule, not referenced" — Unity's
+   built-in Web Request module isn't enabled by default in every project template. Fixed by
+   declaring it in both `package.json` (so any UPM install auto-enables it) and the demo's
+   `manifest.json`.
+2. **`ConfigureAwait(false)` broke Unity's main-thread requirement**: `PermitCoreClient.cs`'s
+   internal awaits all used `.ConfigureAwait(false)` — correct, idiomatic practice for a generic
+   portable .NET library (and a no-op under the `Tests~/` xUnit runner, which has no
+   `SynchronizationContext` anyway), but it explicitly disables Unity's own
+   `SynchronizationContext` continuation-marshaling. In the real Editor this meant a chained
+   `await` (e.g. the nonce fetch inside `ActivateAsync` before the actual activate POST) could
+   resume off Unity's main thread, and the next `UnityWebRequest` construction then threw "Create
+   can only be called from the main thread." Fixed by removing all 11 `.ConfigureAwait(false)`
+   calls from `PermitCoreClient.cs` — verified both by re-running `Tests~/` (still 14/14 green) and
+   by a real, successful live activation in the Editor afterward.
+3. **Demo swallowed exceptions silently**: `TaskManagerProDemo.ActivateAsync`/`RefreshLicenseAsync`
+   are called fire-and-forget (`_ = ActivateAsync();`, required since `OnGUI` isn't `async`) but had
+   no `catch` block — an exception (like bug #2 above) vanished with zero UI feedback and zero
+   Console output, since nothing ever observed the discarded `Task`'s exception. This is what made
+   bug #2 nearly undiagnosable at first; fixed by adding a `catch` that surfaces the message in both
+   the demo's own error UI and `Debug.LogError`.
+
+IL2CPP AOT compilation on an actual built player (as opposed to the Editor's Mono/JIT Play mode)
+remains unverified — a real, if lower-risk, gap for anyone shipping a release build rather than
+testing in-Editor.
 
 ---
 

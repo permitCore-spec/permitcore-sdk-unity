@@ -76,12 +76,12 @@ namespace PermitCore
             var body = new Dictionary<string, object> { ["licenseKey"] = licenseKey };
             if (!string.IsNullOrEmpty(version)) body["version"] = version;
 
-            var resp = await PostAsync("api/v1/validate", body).ConfigureAwait(false);
+            var resp = await PostAsync("api/v1/validate", body);
             if (!resp.Success)
                 return LoadCache(licenseKey) ?? OfflineUnreachable();
 
             var result = ParseLicenseResult(resp.Body);
-            if (result.IsValid) await SaveCacheAsync(licenseKey, result).ConfigureAwait(false);
+            if (result.IsValid) await SaveCacheAsync(licenseKey, result);
             return result;
         }
 
@@ -92,7 +92,7 @@ namespace PermitCore
         {
             string hwid = string.IsNullOrEmpty(deviceId) ? GetHardwareId() : deviceId;
 
-            var nonceResp = await GetAsync("api/v1/nonce").ConfigureAwait(false);
+            var nonceResp = await GetAsync("api/v1/nonce");
             if (!nonceResp.Success)
                 return LoadCache(licenseKey) ?? OfflineUnreachable(); // [S-Continuity]
 
@@ -102,12 +102,12 @@ namespace PermitCore
             if (!string.IsNullOrEmpty(deviceName)) body["deviceName"] = deviceName;
             if (!string.IsNullOrEmpty(version)) body["version"] = version;
 
-            var resp = await PostAsync("api/v1/activate", body).ConfigureAwait(false);
+            var resp = await PostAsync("api/v1/activate", body);
             if (!resp.Success)
                 return LoadCache(licenseKey) ?? OfflineUnreachable();
 
             var result = ParseLicenseResult(resp.Body);
-            if (result.IsValid) await SaveCacheAsync(licenseKey, result).ConfigureAwait(false);
+            if (result.IsValid) await SaveCacheAsync(licenseKey, result);
             return result;
         }
 
@@ -126,7 +126,7 @@ namespace PermitCore
             };
             if (meta != null) body["meta"] = meta;
 
-            var resp = await PostAsync("api/v1/meter", body).ConfigureAwait(false);
+            var resp = await PostAsync("api/v1/meter", body);
             if (!resp.Success) return false;
             var data = Json.Parse(resp.Body) as Dictionary<string, object>;
             return Json.GetBool(data, "recorded");
@@ -140,7 +140,7 @@ namespace PermitCore
             var body = new Dictionary<string, object> { ["licenseKey"] = licenseKey, ["deviceId"] = hwid };
             if (!string.IsNullOrEmpty(deviceName)) body["deviceName"] = deviceName;
 
-            var resp = await PostAsync("api/v1/float/checkout", body).ConfigureAwait(false);
+            var resp = await PostAsync("api/v1/float/checkout", body);
             if (!resp.Success) return new FloatingSession { Success = false, Message = "Cannot reach license server." };
             return FloatingSession.FromJson(Json.Parse(resp.Body) as Dictionary<string, object>);
         }
@@ -148,7 +148,7 @@ namespace PermitCore
         /// <summary>Keeps a floating session alive. Call every 4-5 minutes.</summary>
         public async Task<FloatingSession> HeartbeatAsync(string sessionToken)
         {
-            var resp = await PostAsync("api/v1/float/heartbeat", new Dictionary<string, object> { ["sessionToken"] = sessionToken }).ConfigureAwait(false);
+            var resp = await PostAsync("api/v1/float/heartbeat", new Dictionary<string, object> { ["sessionToken"] = sessionToken });
             if (!resp.Success) return new FloatingSession { Success = false, Message = "Cannot reach license server." };
             return FloatingSession.FromJson(Json.Parse(resp.Body) as Dictionary<string, object>);
         }
@@ -159,7 +159,7 @@ namespace PermitCore
         {
             try
             {
-                await PostAsync("api/v1/float/checkin", new Dictionary<string, object> { ["sessionToken"] = sessionToken }).ConfigureAwait(false);
+                await PostAsync("api/v1/float/checkin", new Dictionary<string, object> { ["sessionToken"] = sessionToken });
             }
             catch { /* best-effort */ }
         }
@@ -226,7 +226,7 @@ namespace PermitCore
         /// network — use the static VerifyOfflineToken for pure offline verification.</summary>
         public async Task<OfflineTokenResult> VerifyOfflineOnlineAsync(string token)
         {
-            var resp = await PostAsync("api/v1/offline/verify", new Dictionary<string, object> { ["token"] = token }).ConfigureAwait(false);
+            var resp = await PostAsync("api/v1/offline/verify", new Dictionary<string, object> { ["token"] = token });
             if (!resp.Success) return new OfflineTokenResult { IsValid = false, Message = "Cannot reach license server." };
             var data = Json.Parse(resp.Body) as Dictionary<string, object>;
             return new OfflineTokenResult { IsValid = Json.GetBool(data, "isValid"), Message = Json.GetString(data, "message") ?? "" };
@@ -264,7 +264,7 @@ namespace PermitCore
 
             try
             {
-                var pkResp = await GetAsync($"api/v1/{Uri.EscapeDataString(tenantSlug)}/public-key").ConfigureAwait(false);
+                var pkResp = await GetAsync($"api/v1/{Uri.EscapeDataString(tenantSlug)}/public-key");
                 if (!pkResp.Success) return;
                 string publicKey = Json.GetString(Json.Parse(pkResp.Body) as Dictionary<string, object>, "publicKey");
                 if (string.IsNullOrEmpty(publicKey)) return;
