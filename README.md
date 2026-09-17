@@ -203,7 +203,8 @@ location Unity provides for exactly this purpose.
 | `VendorWarning` | `string` | Non-fatal message from the vendor |
 | `Message` | `string` | Reason when `IsValid == false` |
 | `IsOffline` | `bool` | True when result came from local cache |
-| `ErrorCode` | `string` | Stable, machine-readable failure reason |
+| `ErrorCode` | `string` | Stable, machine-readable failure reason (e.g. `"NotFound"`, `"SeatsExhausted"`, `"WrongProduct"`) |
+| `ProductId` | `string` | Stable ID of the product this license belongs to. Always present when a license was found, even without passing `expectedProductId` |
 
 `HasFeature(string feature)` — case-insensitive feature check.
 
