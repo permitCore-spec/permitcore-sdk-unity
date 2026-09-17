@@ -1,6 +1,6 @@
 {
   "name": "com.permitcore.sdk",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "displayName": "PermitCore License SDK",
   "description": "Official PermitCore client for Unity — validate, activate, meter, and floating-checkout license keys, with offline grace caching and signed offline activation tokens. Zero external package dependencies.",
   "unity": "2021.2",

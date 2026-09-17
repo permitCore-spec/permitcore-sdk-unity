@@ -33,6 +33,14 @@ namespace PermitCore
         /// empty on success. Message stays free-text for display; branch on this instead.</summary>
         public string ErrorCode;
 
+        /// <summary>The product this license actually belongs to. Always present when a license
+        /// was found, regardless of whether you passed expectedProductId to Validate/Activate —
+        /// null only when the key itself wasn't found at all. Compare this yourself, or pass
+        /// expectedProductId, to confirm a valid key belongs to the specific product you expect:
+        /// without either, any active key for the tenant validates successfully no matter which
+        /// product issued it.</summary>
+        public string ProductId;
+
         /// <summary>Case-insensitive check whether a feature flag is present on the license.</summary>
         public bool HasFeature(string feature)
         {
@@ -64,6 +72,7 @@ namespace PermitCore
                 MaxVersion = Json.GetString(d, "maxVersion"),
                 OfflineCacheToken = Json.GetString(d, "offlineCacheToken"),
                 ErrorCode = Json.GetString(d, "errorCode"),
+                ProductId = Json.GetString(d, "productId"),
             };
         }
     }

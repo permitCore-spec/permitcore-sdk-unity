@@ -67,14 +67,18 @@ namespace PermitCore
         // ── Validate ─────────────────────────────────────────────────────────────────────────
 
         /// <summary>Validates a license key. Does NOT consume an activation slot. version is
-        /// optional — lets the server enforce MinVersion/MaxVersion restrictions. Falls back to
-        /// the local disk cache when the server is unreachable, as long as the license has an
-        /// offline grace period configured. Never throws — a network failure and a rejected key
-        /// both come back as a LicenseResult with IsValid == false.</summary>
-        public async Task<LicenseResult> ValidateAsync(string licenseKey, string version = null)
+        /// optional — lets the server enforce MinVersion/MaxVersion restrictions. expectedProductId
+        /// is optional — when set, the server rejects (LicenseResult.ErrorCode == "WrongProduct")
+        /// unless this key belongs to that exact product; without it, any active key for the
+        /// caller's tenant validates successfully regardless of which product it was issued for.
+        /// Falls back to the local disk cache when the server is unreachable, as long as the
+        /// license has an offline grace period configured. Never throws — a network failure and a
+        /// rejected key both come back as a LicenseResult with IsValid == false.</summary>
+        public async Task<LicenseResult> ValidateAsync(string licenseKey, string version = null, string expectedProductId = null)
         {
             var body = new Dictionary<string, object> { ["licenseKey"] = licenseKey };
             if (!string.IsNullOrEmpty(version)) body["version"] = version;
+            if (!string.IsNullOrEmpty(expectedProductId)) body["expectedProductId"] = expectedProductId;
 
             var resp = await PostAsync("api/v1/validate", body);
             if (!resp.Success)
@@ -87,8 +91,9 @@ namespace PermitCore
 
         /// <summary>Validates AND activates the key on this device. Call only once per
         /// installation — use ValidateAsync on every later launch. deviceId defaults to
-        /// GetHardwareId() when null/empty. version is optional, same meaning as Validate's.</summary>
-        public async Task<LicenseResult> ActivateAsync(string licenseKey, string deviceId = null, string deviceName = null, string version = null)
+        /// GetHardwareId() when null/empty. version and expectedProductId are optional, same
+        /// meaning as Validate's.</summary>
+        public async Task<LicenseResult> ActivateAsync(string licenseKey, string deviceId = null, string deviceName = null, string version = null, string expectedProductId = null)
         {
             string hwid = string.IsNullOrEmpty(deviceId) ? GetHardwareId() : deviceId;
 
@@ -101,6 +106,7 @@ namespace PermitCore
             var body = new Dictionary<string, object> { ["licenseKey"] = licenseKey, ["deviceId"] = hwid, ["nonce"] = nonce };
             if (!string.IsNullOrEmpty(deviceName)) body["deviceName"] = deviceName;
             if (!string.IsNullOrEmpty(version)) body["version"] = version;
+            if (!string.IsNullOrEmpty(expectedProductId)) body["expectedProductId"] = expectedProductId;
 
             var resp = await PostAsync("api/v1/activate", body);
             if (!resp.Success)

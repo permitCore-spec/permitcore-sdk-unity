@@ -59,6 +59,14 @@ public class LicenseGate : MonoBehaviour
 `ValidateAsync`/`ActivateAsync` never throw for a rejected key or a network failure — both come
 back as a `LicenseResult` with `IsValid == false`, so there's only one branch to check.
 
+**Product scoping** (added 1.1.0): `/validate` and `/activate` find a key purely by the key itself
+— by default, any active key belonging to your tenant validates successfully, regardless of which
+of your products it was actually issued for. If your app should only accept keys issued for *this*
+product, either check `result.ProductId` yourself, or pass the optional `expectedProductId`
+parameter and let the server reject a mismatch for you (`result.ErrorCode == "WrongProduct"`). Find
+your product's ID in the Admin panel under Products (or on a license's own detail page) — both now
+show it with a copy button.
+
 ---
 
 ## Activate (call once per installation)
@@ -68,7 +76,8 @@ var result = await _client.ActivateAsync(
     "PERMIT-XXXX-XXXX-XXXX-XXXX",
     deviceId: null,                    // auto-generated when omitted — see Hardware ID below
     deviceName: SystemInfo.deviceName,
-    version: Application.version);     // optional — enforces minVersion/maxVersion on the license
+    version: Application.version,      // optional — enforces minVersion/maxVersion on the license
+    expectedProductId: null);          // optional — reject a key issued for a different product
 
 if (!result.IsValid)
     Debug.LogError("Activation failed: " + result.Message);
