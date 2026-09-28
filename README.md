@@ -16,9 +16,20 @@ Windows/macOS/Linux standalone, mobile, and consoles. **WebGL note** below.
 
 ## Installation
 
-Not yet published as a UPM registry package or git-URL package — install from the source ZIP:
+Published as a real, tagged git package — Unity Package Manager's git-URL install works
+directly:
 
-1. Download the SDK (Admin panel → SDKs, or `GET /api/sdks/unity`).
+**Window → Package Manager → + → Install package from git URL...**
+```
+https://github.com/permitCore-spec/permitcore-sdk-unity.git#v1.1.0
+```
+
+An [OpenUPM](https://openupm.com) listing (`com.permitcore.sdk`) is submitted and pending
+approval — once live, `openupm add com.permitcore.sdk` will be the simplest option.
+
+Working from a local source ZIP instead (Admin panel → SDKs, or `GET /api/sdks/unity`)?
+
+1. Download the SDK.
 2. Extract it anywhere outside your project's `Assets/` folder (e.g. a sibling `Packages/`
    folder, or anywhere on disk).
 3. In Unity: **Window → Package Manager → + → Install package from disk...** → select the
