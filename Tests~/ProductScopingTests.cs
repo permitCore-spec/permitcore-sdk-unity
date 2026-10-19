@@ -13,6 +13,14 @@ namespace PermitCore.Tests
     // is opt-in and must never silently switch on.
     public class ProductScopingTests
     {
+        [Fact]
+        public void PaymentStatusAndGraceAreParsed()
+        {
+            var result = LicenseResult.FromJson(Json.Parse("{\"isValid\":true,\"paymentStatus\":\"past_due\",\"isInGracePeriod\":true}") as Dictionary<string, object>);
+            Assert.Equal("past_due", result.PaymentStatus);
+            Assert.True(result.IsInGracePeriod);
+            Assert.Null(LicenseResult.FromJson(Json.Parse("{\"isValid\":true}") as Dictionary<string, object>).PaymentStatus);
+        }
         // Captures the exact body PermitCoreClient sent, without needing a real network call —
         // the same portable-core-outside-Unity approach the rest of this test suite uses.
         private sealed class CapturingTransport : IPermitCoreTransport

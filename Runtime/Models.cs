@@ -15,6 +15,8 @@ namespace PermitCore
         public string Message;
         public Dictionary<string, string> CustomFields;
         public string VendorWarning;
+        public string PaymentStatus;
+        public bool IsInGracePeriod;
         public List<string> Features;
         public bool IsTrial;
         public int? TrialDaysRemaining;
@@ -63,6 +65,8 @@ namespace PermitCore
                 Message = Json.GetString(d, "message"),
                 CustomFields = Json.GetStringDictionary(d, "customFields"),
                 VendorWarning = Json.GetString(d, "vendorWarning"),
+                PaymentStatus = Json.GetString(d, "paymentStatus"),
+                IsInGracePeriod = Json.GetBool(d, "isInGracePeriod"),
                 Features = Json.GetStringList(d, "features"),
                 IsTrial = Json.GetBool(d, "isTrial"),
                 TrialDaysRemaining = Json.GetInt(d, "trialDaysRemaining"),

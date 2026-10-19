@@ -29,7 +29,7 @@ directly:
 
 **Window → Package Manager → + → Install package from git URL...**
 ```
-https://github.com/permitCore-spec/permitcore-sdk-unity.git#v1.1.0
+https://github.com/permitCore-spec/permitcore-sdk-unity.git#v1.2.0
 ```
 
 Working from a local source ZIP instead (Admin panel → SDKs, or `GET /api/sdks/unity`)?
@@ -290,3 +290,17 @@ Compiles the SDK's portable core (`Runtime/*.cs` minus `UnityWebRequestTransport
 current .NET SDK — a superset of the netstandard2.1 surface this code deliberately restricts
 itself to — and runs the JSON parser round-trip tests, HWID hashing tests, and the shared
 cross-SDK cryptographic vectors from `../test-vectors/vectors.json`.
+
+## Store subscription payment status (1.2.0)
+
+Online validate/activate results include `paymentStatus` (`active`, `past_due`, `unpaid`,
+`canceled`, or null/empty for other licenses) and `isInGracePeriod`. Use the language's normal
+field naming (`PaymentStatus`/`IsInGracePeriod`, `payment_status`/`is_in_grace_period`, or
+camelCase). Show a card-update notice for `past_due` or `unpaid` while `isValid` is true.
+Paid renewals extend the same key to Stripe's paid billing-period end. Default payment grace is
+14 days from paid-through, configurable in Store settings and overridable per license.
+Access expires at the grace deadline; an ended subscription revokes the license.
+
+Signed offline cache tokens are capped at paid-through plus grace and refreshed on successful
+online validation after payment. An offline cached result cannot discover a payment-state change;
+reconnect for current payment metadata. The signed deadline remains authoritative offline.
